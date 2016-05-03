@@ -2,7 +2,13 @@
 
 window.app = {
   server: undefined,
-  init: function () {},
+  init: function () {
+    // $('.username').on('click', function () {
+    //   $(this).addFriend();
+    // });
+    this.addFriend();
+    this.handleSubmit();
+  },
   send: function (messageArray) {
     $.ajax({
       // This is the url you should use to communicate with the parse API server.
@@ -37,11 +43,40 @@ window.app = {
       }
     });
   },
-  addRoom: function () {},
   clearMessages: function () {
     // would this also remove all non-direct children?
     $('#chats').children().remove();
   },
-  addMessage: function () {},
-  addFriend: function () {},
+  addMessage: function (message) {
+    var $chat = $('<div></div>');
+
+    var $user = $('<a href="#" class="username"></a>');
+    $user.attr('data-user', message.username);
+    $user.text(message.username + ' : ');
+
+    var $msg = $('<div></div>');
+    $msg.text(message.text);
+
+    $chat.append($user, $msg);
+
+    $('#chats').append($chat);
+  },
+  addRoom: function (roomName) {
+    var $room = $('<div></div>');
+
+    $room.addClass(roomName);
+    $('#roomSelect').append($room);
+  },
+  addFriend: function () {
+    $('.username').on('click', function () {
+      var $this = $(this).attr('data-user');
+      console.log($this);
+    });
+  },
+  handleSubmit: function () {
+    $('#send .submit').on('submit', function() {
+      console.log($(this));
+    });
+  }
+
 };
