@@ -19,11 +19,12 @@
       <!-- Your HTML goes here! -->
       <span> Current Room:
         <select id="roomSelect">
-          <option value="newroom">New room...</option>
-          <option value="lobby" selected>Lobby</option>
-          <option value="emptyroom" selected>No Roomname</option>
+          <option value="Lobby">Lobby</option>
         </select>
       </span>
+      <form id="usernameForm">
+        New room: <input class="newRoomBox" type="text"></input>
+      </form>
       <form id="usernameForm">
         Username: <input class="usernameBox" type="text"></input>
       </form>
@@ -31,9 +32,9 @@
         Message: <input class="messageBox" type="text"></input>
         <input type="submit" value="Submit"></input>
       </form>
-      <div id="chats"></div>
 
     </div>
+    <div id="chats"></div>
     <script src="scripts/app.js"></script>
   </body>
 </html>

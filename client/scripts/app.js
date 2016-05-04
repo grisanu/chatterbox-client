@@ -1,30 +1,17 @@
 window.app = {
   server: 'https://api.parse.com/1/classes/messages',
   allRooms: {
-    newroom: 0,
-    lobby: [],
-    emptyroom: [],
+    Lobby: [],
+    emptyroom: []
+  },
+  allFriends: {
+
   },
 
   init: function () {
-    this.fetch(function(messages){
-      messages = messages.results;
-
-      _.each(messages, function(message) {
-        debugger;
-        if (message.roomname === $('option:selected').val()) {
-          app.addMessage(message);
-          app.allRooms[message.roomname].push(message);
-        } else if (message.roomname.length === 0) {
-          app.allRooms.emptyroom.push(message);
-        } else if (app.allRooms[message.roomname] === undefined) {
-          app.allRooms[message.roomname] = [];
-          app.allRooms[message.roomname].push(message);
-        }
-      });
-    });
+    this.fetch(app.sortByRoom);
     this.addFriend();
-    this.addRoom();
+    // this.addRoom();
     $('#submitForm').submit(app.handleSubmit);
   },
   send: function (message) {
@@ -46,11 +33,14 @@ window.app = {
     $.ajax({
       url: this.server,
       type: 'GET',
+      data: { order: '-createdAt'},
       contentType: 'application/json',
       success: function (data) {
         // debugger; 
         if (callback) {
           callback(data);
+        } else {
+          console.log('No callback provided', data);
         }
       },
       error: function (data) {
@@ -58,19 +48,58 @@ window.app = {
       }
     });
   },
+  sortByRoom: function (messages) {
+    messages = messages.results;
+
+    _.each(messages, function(message) {
+      // debugger;
+      // console.log(message);
+
+      var roomToAdd = message.roomname;
+      // message has roomname current room selected
+      if (roomToAdd === $('option:selected').val() && app.allRooms[roomToAdd] !== undefined) {
+        app.addMessage(message);
+      } else if (roomToAdd === undefined || roomToAdd.length === 0) { // emptyroom
+        roomToAdd = 'emptyroom';
+      } else if (app.allRooms[roomToAdd] === undefined) { // new room
+        app.allRooms[roomToAdd] = [];
+      }
+      // debugger;
+      // console.log(message);
+      // console.log(app.allRooms);
+      // console.log(roomToAdd);
+      // console.log(app.allRooms[roomToAdd]);
+      app.allRooms[roomToAdd].push(message);
+
+
+    });
+
+    app.addRoom();
+  },
+  reload: function () {
+    app.clearMessages();
+    app.allRooms = {
+      Lobby: [],
+      emptyroom: []
+    };
+    $('#roomSelect').empty();
+    app.fetch(app.sortByRoom);
+  },
   handleSubmit: function (e) {
     e.preventDefault();
+    var $newRoom = $('.newRoomBox').val();
     var $newMsg = $('.messageBox').val();
-    var $room = $('option:selected').val();
 
     var message = {
       text: $newMsg,
       username: $('.usernameBox').val() || window.location.search.match(/username=(\w*)/)[1],
-      roomname: $room
+      roomname: $newRoom
     };
     app.send(message);
     $('.messageBox').val('');
-    location.reload();
+    $('.newRoomBox').val('');
+    $('.usernameBox').val('');
+    app.reload();
   },
   clearMessages: function() {
     $('#chats').empty();
@@ -86,40 +115,58 @@ window.app = {
     var $user = $('<a href="#" class="username"></a>');
     $user.attr('data-user', escapedUsername);
     $user.text(escapedUsername + ': ');
+    
+    $user.on('click', function () {
+      // var $username = $(this);
+      // var $data_username = $username.attr('data-user');
+      // var getUser = $(this).attr('data-user')
+      // getUser.toggleClass('friend')
+      var getUser = $(this).attr('data-user');
+      $('[data-user=' + getUser + ']').toggleClass('friend');
 
-    var $msg = $('<div>' + escapedText + ' !!!!! ' + escapedRoom + '</div>');
+
+      app.addFriend(getUser);
+    });
+
+    var $msg = $('<div>' + escapedText + '</div>');
     
     $chat.append($user, $msg);
     $chats.append($chat);
   },
   addRoom: function () {
+    console.log('count +1');
+    _.each(app.allRooms, function(_, key) {
+      // debugger;
+      var $option = $('<option></option>');
+      var $select = $('#roomSelect');
+      var roomSize = _.length;
+
+      $option.attr('value', key);
+      $option.text(key + ' (' + roomSize + ')');
+      $select.append($option);
+
+    });
+
     $('select').on('change', function (e) {
       var optionSelected = $("option:selected", this);
-      var valueSelected = this.value;
+      var valueSelected = this.value;   
+      app.clearMessages();
 
-      if (valueSelected === "newroom") {
-        var roomName = prompt('Type the room name: ')
-        var $roomSelect = $('#roomSelect');
-        var $room = $('<option value=' + roomName + '>' + roomName + '</option>');
-        $roomSelect.append($room);
-      } else {
-        _.each(app.allRooms[valueSelected], function (message) {
-          app.addMessage(message);
-        });
-      };
+      _.each(app.allRooms[valueSelected], function (message) {
+        app.addMessage(message);
+      });
 
-      console.log(optionSelected, "  --  ", valueSelected);
+
+      // console.log(optionSelected, "  --  ", valueSelected);
     });
   },
-  addFriend: function () {
-    $('.username').on('click', function () {
-      var $this = $(this).attr('data-user');
-    });
+  addFriend: function (friendName) {
+    app.allFriends[friendName] = friendName;
+
   },
 
 };
 app.init();
-
 
 // createdAt: "2016-05-03T1:4:30.112Z"
 // objectId: "qDONKRnkKZ"
